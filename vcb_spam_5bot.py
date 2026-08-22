@@ -121,11 +121,7 @@ COPYPASTA_LIST = [
 RAIN_EMOJIS = ["🌧️", "💦", "🌊", "⛈️", "🌩️", "💧", "🌀", "🌪️", "❄️", "🌨️"]
 
 TREO_ROOM_V1 = "# ***🍂🌳 𝘕𝘨𝘶𝘺𝘦̂̃𝘯 Đ𝘶̛́𝘤 𝘏𝘶𝘺 𝘈𝘯𝘬 𝘓𝘢̀ 𝘕𝘰1 𝘊𝘢́𝘪 𝘚𝘢̀𝘯 𝘛𝘳𝘦𝘰 𝘔𝘢́𝘋 🌳🍂***"
-TREO_ROOM_V2 = "# ***🌟🔥 𝖟𝖝𝖗𝖞𝖔𝖓_. 𝕿```python
-```python
-# ***🌟🔥 𝖟𝖝𝖗𝖞𝖔𝖓_. 𝕿```python
-```python
-𝖍𝖗𝖞𝖔𝖓_. 𝕿𝖗𝖊𝖔 𝕸𝖆́𝖞 𝕾𝖕𝖆𝖒 𝕭𝖔𝖝 𝕮𝖍𝖆𝖙 🔥🌟***"
+TREO_ROOM_V2 = "# ***🌟🔥 zxryon_. Treo Máy Spam Box Chat 🔥🌟***"
 
 
 # ===================== HELPERS =====================
@@ -206,7 +202,6 @@ def load_ngon_from_file(file_name):
     file_name = os.path.basename(str(file_name))
     file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ngon_files", file_name)
     if not os.path.isfile(file_path):
-        # thử cùng thư mục
         file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), file_name)
     if not os.path.isfile(file_path):
         return []
@@ -259,7 +254,6 @@ def _reset_spam_flags(guild_id=None, bot_id=None):
             for k in list(flags):
                 flags[k] = False
         else:
-            # key dạng botid_guildid
             for k in list(flags):
                 if guild_id and str(guild_id) in str(k):
                     flags[k] = False
@@ -388,10 +382,10 @@ async def _xangon_loop(channel, flag_key, target, ngon_list):
         await asyncio.sleep(0.02)
 
 
-async def _tungkinh_loop(channel, flag_key, target):
+async def _twarnings_loop(channel, flag_key, target):
     tung_kinh_list = [
         "🙏 Nam mô A Di Đà Phật... chết con đĩ mẹ mày đi thằng súc sinh cặn bã =))",
-        "🙏 Nam mô Quan Thế Âm Bồ Tát... mày là thằng chó đẻ não úng nước =))",
+        "🙏 Nam mô Quan Thế Âm Bồ Tát... mày là thằng chó đẻ脑 úng nước =))",
         "🙏 Oṃ maṇi padme hūṃ... đi chết đi thằng vô dụng lồn mẹ mày =))",
     ]
     while spamming_tungkinh.get(flag_key, False):
@@ -402,7 +396,7 @@ async def _tungkinh_loop(channel, flag_key, target):
         try:
             await _send_message_safe(channel, f"{cau} {target.mention}")
         except Exception:
-            spamming_tungkinh[flag_key] = False
+            spamming_twarnings[flag_key] = False
             break
         await asyncio.sleep(0.5)
 
@@ -599,7 +593,7 @@ def register_commands(bot_instance):
         for d in (
             spamming_mess, spamming_ulspam, spamming_hyperspam, spamming_loopspam,
             spamming_rainspam, spamming_smartspam, spamming_autospam, spamming_ghostping,
-            spamming_copypasta, spamming_xangon, spamming_tungkinh, spamming_room,
+            spamming_copypasta, spamming_xangon, spamming_twarnings, spamming_room,
             spamming_vcb, spamming_treotool,
         ):
             d[key] = False
@@ -616,7 +610,7 @@ def register_commands(bot_instance):
             "mess": spamming_mess, "ulspam": spamming_ulspam, "hyperspam": spamming_hyperspam,
             "loopspam": spamming_loopspam, "rainspam": spamming_rainspam, "smartspam": spamming_smartspam,
             "autospam": spamming_autospam, "ghostping": spamming_ghostping, "copypasta": spamming_copypasta,
-            "xangon": spamming_xangon, "tungkinh": spamming_tungkinh, "treoroom": spamming_room,
+            "xangon": spamming_xangon, "twarnings": spamming_twarnings, "treoroom": spamming_room,
             "treotool": spamming_treotool,
         }
         running = [name for name, d in flags.items() if d.get(key)]
@@ -748,24 +742,23 @@ def register_commands(bot_instance):
 
     @bot_instance.command(name="ngonnhay")
     async def cmd_ngonnhay(ctx, member: discord.Member = None, file_name: str = "ngon1.txt"):
-        # alias nhanh của xangon
         await ctx.invoke(bot_instance.get_command("xangon"), member=member, file_name=file_name)
 
-    @bot_instance.command(name="tungkinh")
-    async def cmd_tungkinh(ctx, member: discord.Member = None):
+    @bot_instance.command(name="twarnings")
+    async def cmd_twarnings(ctx, member: discord.Member = None):
         e = _guild_check(ctx)
         if e: return await err(ctx, e)
         if not is_luxury(ctx): return await err(ctx, "❌ Không có quyền.")
-        if not member: return await err(ctx, "`h!tungkinh @user`")
+        if not member: return await err(ctx, "`h!twarnings @user`")
         key = task_key(ctx.bot, ctx.guild.id)
-        ok_start, msg = can_start_task(spamming_tungkinh, key, "tungkinh")
+        ok_start, msg = can_start_task(spamming_tungkinh, key, "twarnings")
         if not ok_start: return await err(ctx, msg)
         spamming_tungkinh[key] = True
-        start_spam_task(_tungkinh_loop(ctx.channel, key, member), "tungkinh", str(member.id))
+        start_spam_task(_twarnings_loop(ctx.channel, key, member), "twarnings", str(member.id))
         await ok(ctx, f"✅ Tụng kinh → {member.mention}")
 
-    @bot_instance.command(name="ngungtungkinh")
-    async def cmd_ngungtungkinh(ctx):
+    @bot_instance.command(name="ngungtwarnings")
+    async def cmd_ngungtwarnings(ctx):
         if not is_luxury(ctx): return await err(ctx, "❌ Không có quyền.")
         key = task_key(ctx.bot, ctx.guild.id)
         spamming_tungkinh[key] = False
