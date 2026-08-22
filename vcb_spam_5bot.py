@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 VCB Spam Worker – 5 bot riêng (chỉ 26 lệnh War/Spam/Treo)
-- Prefix: h!
+- Prefix: l!
 - Token: Tự động nhận từ Railway Variables (BOT_TOKENS hoặc TOKEN_1 ... TOKEN_5) hoặc token_spam.txt
 - Không có game / economy / ma sói / menu
 - Nhẹ hơn bot chính, chạy song song trong tmux
@@ -21,12 +21,10 @@ from discord.ext import commands
 from discord.ui import Button, View
 
 # ===================== CONFIG =====================
-PREFIX = "h!"
+PREFIX = "l!"
 OWNER_ID = 1467434324847628405
-# Thêm ID được dùng spam (Owner luôn được)
 SPAM_ALLOWED: Set[int] = {
     OWNER_ID,
-    # 1234567890,
 }
 
 TOKEN_FILE = "token_spam.txt"
@@ -36,7 +34,7 @@ MAX_TOKENS = 5
 def read_tokens(file_name: str = TOKEN_FILE):
     tokens = []
 
-    # 1. Ưu tiên đọc từ Biến môi trường Railway (dạng BOT_TOKENS="token1,token2,...")
+    # 1. Ưu tiên đọc từ Biến môi trường Railway
     env_bot_tokens = os.getenv("BOT_TOKENS")
     if env_bot_tokens:
         tokens = [t.strip() for t in env_bot_tokens.split(",") if t.strip()]
@@ -57,7 +55,7 @@ def read_tokens(file_name: str = TOKEN_FILE):
                     return 999
             tokens = [found_env[k] for k in sorted(found_env.keys(), key=sort_key)]
 
-    # 3. Phương án dự phòng: Đọc từ file token_spam.txt nếu chạy ở Local
+    # 3. Phương án dự phòng: Đọc từ file local
     if not tokens and os.path.exists(file_name):
         found_file = {}
         with open(file_name, "r", encoding="utf-8") as f:
@@ -385,7 +383,7 @@ async def _xangon_loop(channel, flag_key, target, ngon_list):
 async def _twarnings_loop(channel, flag_key, target):
     tung_kinh_list = [
         "🙏 Nam mô A Di Đà Phật... chết con đĩ mẹ mày đi thằng súc sinh cặn bã =))",
-        "🙏 Nam mô Quan Thế Âm Bồ Tát... mày là thằng chó đẻ脑 úng nước =))",
+        "🙏 Nam mô Quan Thế Âm Bồ Tát... mày là thằng chó đẻ não úng nước =))",
         "🙏 Oṃ maṇi padme hūṃ... đi chết đi thằng vô dụng lồn mẹ mày =))",
     ]
     while spamming_tungkinh.get(flag_key, False):
@@ -396,7 +394,7 @@ async def _twarnings_loop(channel, flag_key, target):
         try:
             await _send_message_safe(channel, f"{cau} {target.mention}")
         except Exception:
-            spamming_twarnings[flag_key] = False
+            spamming_tungkinh[flag_key] = False
             break
         await asyncio.sleep(0.5)
 
@@ -445,7 +443,7 @@ async def _treotool_loop(channel, flag_key, content, delay):
         await asyncio.sleep(max(1, delay))
 
 
-# ===================== REGISTER 26 COMMANDS =====================
+# ===================== REGISTER COMMANDS =====================
 def register_commands(bot_instance):
 
     @bot_instance.command(name="setupspam")
@@ -468,7 +466,7 @@ def register_commands(bot_instance):
         if e: return await err(ctx, e)
         if not is_luxury(ctx): return await err(ctx, "❌ Không có quyền.")
         content = noi_dung or spam_setup_content.get(ctx.guild.id)
-        if not content: return await err(ctx, "❌ Chưa có nội dung. `h!setupspam <nd>` hoặc `h!mess <nd>`")
+        if not content: return await err(ctx, "❌ Chưa có nội dung. `l!setupspam <nd>` hoặc `l!mess <nd>`")
         key = task_key(ctx.bot, ctx.guild.id)
         ok_start, msg = can_start_task(spamming_mess, key, "mess")
         if not ok_start: return await err(ctx, msg)
@@ -586,6 +584,7 @@ def register_commands(bot_instance):
         start_spam_task(_copypasta_loop(ctx.channel, key), "copypasta", str(ctx.channel.id))
         await ok(ctx, "✅ Đang copypasta...")
 
+    # ----- LỆNH DỪNG -----
     @bot_instance.command(name="stop")
     async def cmd_stop(ctx):
         if not is_luxury(ctx): return await err(ctx, "❌ Không có quyền.")
@@ -593,14 +592,20 @@ def register_commands(bot_instance):
         for d in (
             spamming_mess, spamming_ulspam, spamming_hyperspam, spamming_loopspam,
             spamming_rainspam, spamming_smartspam, spamming_autospam, spamming_ghostping,
-            spamming_copypasta, spamming_xangon, spamming_twarnings, spamming_room,
+            spamming_copypasta, spamming_xangon, spamming_tungkinh, spamming_room,
             spamming_vcb, spamming_treotool,
         ):
             d[key] = False
+        await ok(ctx, "🛑 Đã dừng task của bot này trên server.")
+
+    @bot_instance.command(name="stopall")
+    async def cmd_stopall(ctx):
+        if not is_luxury(ctx): return await err(ctx, "❌ Không có quyền.")
         db_set_global_stop(True)
+        stop_all(ctx.guild.id if ctx.guild else None)
         await asyncio.sleep(0.3)
         db_set_global_stop(False)
-        await ok(ctx, "🛑 Đã dừng task của bot này trên server.")
+        await ok(ctx, "🛑🛑🛑 ĐÃ DỪNG TẤT CẢ TASK CỦA TOÀN BỘ BOT!")
 
     @bot_instance.command(name="status")
     async def cmd_status(ctx):
@@ -610,7 +615,7 @@ def register_commands(bot_instance):
             "mess": spamming_mess, "ulspam": spamming_ulspam, "hyperspam": spamming_hyperspam,
             "loopspam": spamming_loopspam, "rainspam": spamming_rainspam, "smartspam": spamming_smartspam,
             "autospam": spamming_autospam, "ghostping": spamming_ghostping, "copypasta": spamming_copypasta,
-            "xangon": spamming_xangon, "twarnings": spamming_twarnings, "treoroom": spamming_room,
+            "xangon": spamming_xangon, "twarnings": spamming_tungkinh, "treoroom": spamming_room,
             "treotool": spamming_treotool,
         }
         running = [name for name, d in flags.items() if d.get(key)]
@@ -723,7 +728,7 @@ def register_commands(bot_instance):
         e = _guild_check(ctx)
         if e: return await err(ctx, e)
         if not is_luxury(ctx): return await err(ctx, "❌ Không có quyền.")
-        if not member: return await err(ctx, "`h!xangon @user [file]`")
+        if not member: return await err(ctx, "`l!xangon @user [file]`")
         ngon = load_ngon_from_file(file_name)
         if not ngon: return await err(ctx, f"❌ Không đọc được `{file_name}`.")
         key = task_key(ctx.bot, ctx.guild.id)
@@ -749,11 +754,11 @@ def register_commands(bot_instance):
         e = _guild_check(ctx)
         if e: return await err(ctx, e)
         if not is_luxury(ctx): return await err(ctx, "❌ Không có quyền.")
-        if not member: return await err(ctx, "`h!twarnings @user`")
+        if not member: return await err(ctx, "`l!twarnings @user`")
         key = task_key(ctx.bot, ctx.guild.id)
         ok_start, msg = can_start_task(spamming_tungkinh, key, "twarnings")
         if not ok_start: return await err(ctx, msg)
-        spamming_tungkinh[key] = True
+        spamming_twarnings[key] = True
         start_spam_task(_twarnings_loop(ctx.channel, key, member), "twarnings", str(member.id))
         await ok(ctx, f"✅ Tụng kinh → {member.mention}")
 
