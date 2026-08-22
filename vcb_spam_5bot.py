@@ -3,7 +3,7 @@
 """
 VCB Spam Worker – 5 bot riêng (chỉ 26 lệnh War/Spam/Treo)
 - Prefix: h!
-- Token: token_spam.txt (TOKEN_1 … TOKEN_5)
+- Token: Tự động nhận từ Railway Variables (BOT_TOKENS hoặc TOKEN_1 ... TOKEN_5) hoặc token_spam.txt
 - Không có game / economy / ma sói / menu
 - Nhẹ hơn bot chính, chạy song song trong tmux
 """
@@ -34,38 +34,57 @@ MAX_TOKENS = 5
 
 # ===================== TOKEN =====================
 def read_tokens(file_name: str = TOKEN_FILE):
-    if not os.path.exists(file_name):
-        print(f"❌ Không tìm thấy {file_name}. Đang tạo file mẫu...")
-        with open(file_name, "w", encoding="utf-8") as f:
-            f.write(
-                "TOKEN_1=\nTOKEN_2=\nTOKEN_3=\nTOKEN_4=\nTOKEN_5=\n"
-            )
-        print(f"Đã tạo {file_name}. Hãy điền token rồi chạy lại.")
-        sys.exit(1)
+    tokens = []
 
-    found = {}
-    with open(file_name, "r", encoding="utf-8") as f:
-        for raw in f:
-            line = raw.strip()
-            if not line or line.startswith("#") or "=" not in line:
-                continue
-            key, value = line.split("=", 1)
-            key = key.strip().upper()
-            value = value.strip()
-            if key.startswith("TOKEN_") and value:
-                found[key] = value
+    # 1. Ưu tiên đọc từ Biến môi trường Railway (dạng BOT_TOKENS="token1,token2,...")
+    env_bot_tokens = os.getenv("BOT_TOKENS")
+    if env_bot_tokens:
+        tokens = [t.strip() for t in env_bot_tokens.split(",") if t.strip()]
 
-    # Sắp xếp TOKEN_1, TOKEN_2, ...
-    def sort_key(k):
-        try:
-            return int(k.split("_")[1])
-        except Exception:
-            return 999
-
-    tokens = [found[k] for k in sorted(found.keys(), key=sort_key)][:MAX_TOKENS]
+    # 2. Đọc từ các biến môi trường lẻ (TOKEN_1, TOKEN_2, ...)
     if not tokens:
-        print(f"❌ Không có token hợp lệ trong {file_name}.")
+        found_env = {}
+        for key, value in os.environ.items():
+            key_upper = key.upper()
+            if key_upper.startswith("TOKEN_") and value.strip():
+                found_env[key_upper] = value.strip()
+        
+        if found_env:
+            def sort_key(k):
+                try:
+                    return int(k.split("_")[1])
+                except Exception:
+                    return 999
+            tokens = [found_env[k] for k in sorted(found_env.keys(), key=sort_key)]
+
+    # 3. Phương án dự phòng: Đọc từ file token_spam.txt nếu chạy ở Local
+    if not tokens and os.path.exists(file_name):
+        found_file = {}
+        with open(file_name, "r", encoding="utf-8") as f:
+            for raw in f:
+                line = raw.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                key, value = line.split("=", 1)
+                key = key.strip().upper()
+                value = value.strip()
+                if key.startswith("TOKEN_") and value:
+                    found_file[key] = value
+
+        def sort_key(k):
+            try:
+                return int(k.split("_")[1])
+            except Exception:
+                return 999
+        tokens = [found_file[k] for k in sorted(found_file.keys(), key=sort_key)]
+
+    tokens = tokens[:MAX_TOKENS]
+
+    if not tokens:
+        print(f"❌ Không tìm thấy token hợp lệ từ Biến môi trường (Variables) hoặc file {file_name}!")
+        print("💡 Hãy thêm biến BOT_TOKENS hoặc TOKEN_1, TOKEN_2,... vào tab Variables trên Railway.")
         sys.exit(1)
+
     print(f"📌 Spam Worker: nạp {len(tokens)} bot.")
     return tokens
 
@@ -102,7 +121,11 @@ COPYPASTA_LIST = [
 RAIN_EMOJIS = ["🌧️", "💦", "🌊", "⛈️", "🌩️", "💧", "🌀", "🌪️", "❄️", "🌨️"]
 
 TREO_ROOM_V1 = "# ***🍂🌳 𝘕𝘨𝘶𝘺𝘦̂̃𝘯 Đ𝘶̛́𝘤 𝘏𝘶𝘺 𝘈𝘯𝘬 𝘓𝘢̀ 𝘕𝘰1 𝘊𝘢́𝘪 𝘚𝘢̀𝘯 𝘛𝘳𝘦𝘰 𝘔𝘢́𝘋 🌳🍂***"
-TREO_ROOM_V2 = "# ***🌟🔥 𝖟𝖝𝖗𝖞𝖔𝖓_. 𝕿𝖗𝖊𝖔 𝕸𝖆́𝖞 𝕾𝖕𝖆𝖒 𝕭𝖔𝖝 𝕮𝖍𝖆𝖙 🔥🌟***"
+TREO_ROOM_V2 = "# ***🌟🔥 𝖟𝖝𝖗𝖞𝖔𝖓_. 𝕿```python
+```python
+# ***🌟🔥 𝖟𝖝𝖗𝖞𝖔𝖓_. 𝕿```python
+```python
+𝖍𝖗𝖞𝖔𝖓_. 𝕿𝖗𝖊𝖔 𝕸𝖆́𝖞 𝕾𝖕𝖆𝖒 𝕭𝖔𝖝 𝕮𝖍𝖆𝖙 🔥🌟***"
 
 
 # ===================== HELPERS =====================
